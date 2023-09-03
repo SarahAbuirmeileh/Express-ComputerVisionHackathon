@@ -24,5 +24,6 @@ sudo systemctl daemon-reload
 sudo systemctl enable app.service
 
 sudo -u app sh -c "mkdir -p /home/app/app && cd /home/app/app && curl -LO $download_url  && tar xzvf app.tar.gz  && npm install --omit=dev"
-
+sudo -u app sh -c "echo AccessKey=AKIA3SQWPZW4UHNPBLPY > /home/app/app/.env"
+sudo -u app sh -c "echo SecretAccessKey=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  > /home/app/app/.env"
 sudo reboot

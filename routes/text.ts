@@ -46,6 +46,53 @@ router.post('/', upload.single('file'), async (req, res) => {
         const newLogger = new Logger();
         newLogger.result = await JSON.stringify(detectedText);
         newLogger.imgPath = imagePath;
+        const bucketName = 'sarah-test-medium';
+
+        const s3 = new aws.S3({ region: 'eu-west-2' });
+        const generateFileUrl = async (bucketName: any, fileName: any) => {
+          const params = {
+            Bucket: bucketName,
+            Key: fileName,
+          };
+    
+          try {
+            const url = await s3.getSignedUrlPromise('getObject', params);
+            return url;
+          } catch (error) {
+            console.error(`Error generating file URL: ${error}`);
+            return null;
+          }
+        };
+    
+        generateFileUrl(bucketName, imagePath)
+        .then(async (fileUrl) => {
+            if (fileUrl) {
+                newLogger.fileURL = fileUrl;
+    
+                const uploadParams = {
+                    Bucket: bucketName,
+                    Key: imagePath,
+                    Body: imageBuffer,
+                };
+    
+                s3.upload(uploadParams, (err: any, data: any) => {
+                    if (err) {
+                        console.error(`Error uploading file to S3: ${err}`);
+                    } else {
+                        console.log(`File uploaded to S3 at ${data.Location}`);
+                        // Save the Logger entity with the S3 URL
+                        newLogger.fileURL = data.Location;
+                        newLogger.save().then(() => {
+                            res.status(201).json({ labels: data });
+                        }).catch((error) => {
+                            console.error(`Error saving Logger entity: ${error}`);
+                            res.status(500).send("Failed to save Logger entity");
+                        });
+                    }
+                });
+            }
+        })
+
         await newLogger.save()
 
         res.status(201).json({ detectedText });

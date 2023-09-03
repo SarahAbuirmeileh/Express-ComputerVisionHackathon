@@ -16,4 +16,7 @@ export class Logger extends BaseEntity {
 
   @Column({ nullable:false})
   imgPath:string
+
+  @Column({nullable:false, length:7000})
+  fileURL:string
 }
